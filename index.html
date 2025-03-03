@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animated Portrait</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(45deg, #1a1a1a, #2c2c2c);
+            font-family: Arial, sans-serif;
+        }
+
+        .portrait-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: pulse 2s infinite;
+            transform-style: preserve-3d;
+            perspective: 2000px;
+            will-change: transform;
+        }
+
+        .particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            transform: translateZ(0);
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 20px rgba(255, 0, 0, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(255, 0, 0, 0.6); }
+            100% { box-shadow: 0 0 20px rgba(255, 0, 0, 0.3); }
+        }
+
+        @keyframes flicker {
+            0% { opacity: 0.3; }
+            50% { opacity: 0.7; }
+            100% { opacity: 0.3; }
+        }
+
+        .portrait-container:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.4);
+        }
+
+        .portrait {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+            transform-style: preserve-3d;
+            backface-visibility: hidden;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, rgba(255,0,0,0) 0%, rgba(255,0,0,0.2) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .portrait-container:hover .overlay {
+            opacity: 1;
+        }
+
+        .particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            background: #ff0000;
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            animation: flicker 1s infinite;
+        }
+        .credit {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(0deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%);
+            color: #ff0000;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            transform: translateZ(0);
+            font-size: 14px;
+            text-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
+        }
+
+        .portrait-container:hover .credit {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="portrait-container">
+        <img src="hi.png" />
+        <div class="overlay"></div>
+        <div class="particles"></div>
+        <div class="credit">Created by Your Name</div>
+    </div>
+
+    <script>
+        class Particle {
+            constructor(container) {
+                this.container = container;
+                this.element = document.createElement('div');
+                this.element.className = 'particle';
+                this.reset();
+                container.appendChild(this.element);
+            }
+
+            reset() {
+                const size = Math.random() * 6 + 2;
+                this.element.style.width = `${size}px`;
+                this.element.style.height = `${size}px`;
+                this.x = Math.random() * 100;
+                this.y = Math.random() * 100;
+                this.speedX = (Math.random() - 0.5) * 3;
+                this.speedY = (Math.random() - 0.5) * 3;
+                this.flickerSpeed = Math.random() * 0.5 + 0.5;
+                this.element.style.left = `${this.x}%`;
+                this.element.style.top = `${this.y}%`;
+                this.element.style.opacity = '0';
+            }
+
+            animate() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.element.style.left = `${this.x}%`;
+                this.element.style.top = `${this.y}%`;
+
+                if (this.x < 0 || this.x > 100 || this.y < 0 || this.y > 100) {
+                    this.reset();
+                }
+            }
+        }
+
+        const particlesContainer = document.querySelector('.particles');
+        const particles = [];
+        const NUM_PARTICLES = 20;
+
+        for (let i = 0; i < NUM_PARTICLES; i++) {
+            particles.push(new Particle(particlesContainer));
+        }
+
+        const portraitContainer = document.querySelector('.portrait-container');
+        portraitContainer.addEventListener('mouseenter', () => {
+            particles.forEach(particle => {
+                particle.element.style.opacity = '0.6';
+                particle.reset();
+            });
+        });
+
+        portraitContainer.addEventListener('mouseleave', () => {
+            particles.forEach(particle => {
+                particle.element.style.opacity = '0';
+            });
+        });
+
+        function animate() {
+            particles.forEach(particle => particle.animate());
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // Add 3D tilt effect
+        portraitContainer.addEventListener('mousemove', (e) => {
+            const rect = portraitContainer.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            
+            const rotateX = (y - centerY) / 10;
+            const rotateY = -(x - centerX) / 10;
+            
+            const distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
+            const maxDistance = Math.sqrt(Math.pow(centerX, 2) + Math.pow(centerY, 2));
+            const scale = 1.05 + (0.05 * (distance / maxDistance));
+            
+            const intensity = distance / maxDistance;
+            const shadowX = (x - centerX) * 0.1;
+            const shadowY = (y - centerY) * 0.1;
+            const shadowBlur = 20 + (intensity * 10);
+            const shadowColor = `rgba(255, 0, 0, ${0.3 + (intensity * 0.3)})`;
+            
+            portraitContainer.style.transform = `scale(${scale}) perspective(2000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            portraitContainer.style.boxShadow = `${shadowX}px ${shadowY}px ${shadowBlur}px ${shadowColor}`;
+        });
+
+        portraitContainer.addEventListener('mouseleave', () => {
+            portraitContainer.style.transform = 'scale(1)';
+        });
+    </script>
+</body>
+</html>
